@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Numerics;
 
 namespace GraficadorSeñales
 {
@@ -152,6 +153,29 @@ namespace GraficadorSeñales
                 instanteActual += periodoMuestreo;
             }
             return resultado;
+        }
+
+        public static Señal transformar(Señal señal)
+        {
+            SeñalPersonalizada transformada = new SeñalPersonalizada();
+
+            transformada.TiempoInicial = señal.TiempoInicial;
+            transformada.TiempoFinal = señal.TiempoFinal;
+            transformada.FrecuenciaMuestreo = señal.FrecuenciaMuestreo;
+
+            for (int k = 0; k < señal.Muestras.Count; k++)
+            {
+                Complex muestra = 0;
+                for (int n = 0; n < señal.Muestras.Count; n++)
+                {
+                    // Fórmula de la transformada de Fourier
+                    muestra += señal.Muestras[n].Y * Complex.Exp((-2 * Math.PI * Complex.ImaginaryOne * k * n) / señal.Muestras.Count);
+                }
+                // Magnitude permite acceder a un número imaginario como número real.
+                transformada.Muestras.Add(new Muestra(k, muestra.Magnitude));
+            }
+
+            return transformada;
         }
     }
 }
