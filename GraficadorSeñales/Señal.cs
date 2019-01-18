@@ -172,7 +172,7 @@ namespace GraficadorSeñales
                     muestra += señal.Muestras[n].Y * Complex.Exp((-2 * Math.PI * Complex.ImaginaryOne * k * n) / señal.Muestras.Count);
                 }
                 // Magnitude permite acceder a un número imaginario como número real.
-                transformada.Muestras.Add(new Muestra(k, muestra.Magnitude));
+                transformada.Muestras.Add(new Muestra((double)k/(double)señal.Muestras.Count, muestra.Magnitude));
             }
 
             return transformada;

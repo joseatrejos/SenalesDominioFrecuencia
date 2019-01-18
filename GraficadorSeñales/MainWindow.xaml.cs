@@ -178,6 +178,26 @@ namespace GraficadorSeñales
                     plnGrafica_Resultado.Points.Add(new Point((muestra.X - transformada.TiempoInicial) * scrContenedor_Resultado.Width, (muestra.Y / transformada.AmplitudMaxima * ((scrContenedor_Resultado.Height / 2) - 30) * -1 + (scrContenedor_Resultado.Height / 2))));
                 }
             }
+            double valorMaximo = 0;
+            int indiceMaximo = 0;
+            int indiceActual = 0;
+
+            foreach(Muestra muestra in transformada.Muestras)
+            {
+                if (muestra.Y > valorMaximo)
+                {
+                    valorMaximo = muestra.Y;
+                    indiceMaximo = indiceActual;
+                }
+                indiceActual++;
+                if(indiceActual > (double)transformada.Muestras.Count)
+                {
+                    break;
+                }
+            }
+
+            double F = ((señal.FrecuenciaMuestreo / 2) * indiceActual) / (double)transformada.Muestras.Count;
+            lbl_Hz.Text = F.ToString("F");
 
             // Línea del Eje X
             plnEjeX_Resultado.Points.Clear();
