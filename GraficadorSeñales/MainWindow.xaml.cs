@@ -196,8 +196,8 @@ namespace GraficadorSeñales
                 }
             }
 
-            double F = ((señal.FrecuenciaMuestreo / 2) * indiceActual) / (double)transformada.Muestras.Count;
-            lbl_Hz.Text = F.ToString("F");
+            double frecuenciaFundaental = ((double)indiceMaximo * indiceActual) / (double)transformada.Muestras.Count;
+            lbl_Hz.Text = frecuenciaFundaental.ToString("F") + " HZ";
 
             // Línea del Eje X
             plnEjeX_Resultado.Points.Clear();
