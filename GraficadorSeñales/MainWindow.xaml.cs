@@ -12,6 +12,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Microsoft.Win32;
+using NAudio.Wave;
+using System.Linq;
 
 namespace GraficadorSeñales
 {
@@ -31,70 +34,40 @@ namespace GraficadorSeñales
 
         private void BotonGraficar_Click(object sender, RoutedEventArgs e)
         {
-            double tiempoInicial = double.Parse(txt_TiempoInicial.Text);
-            double tiempoFinal = double.Parse(txt_TiempoFinal.Text);
-            double frecuenciaMuestreo = double.Parse(txt_FrecuenciaDeMuestreo.Text);
+            var reader = new AudioFileReader(txt_RutaArchivo.Text);
 
-            switch (cb_TipoSeñal.SelectedIndex)
-            {
-                // Señal Senoidal
-                case 0:
-                    double amplitud = double.Parse(((ConfiguracionSeñalSenoidal)(panelConfiguracion.Children[0])).txt_Amplitud.Text);
-                    double fase = double.Parse(((ConfiguracionSeñalSenoidal)(panelConfiguracion.Children[0])).txt_Fase.Text);
-                    double frecuencia = double.Parse(((ConfiguracionSeñalSenoidal)(panelConfiguracion.Children[0])).txt_Frecuencia.Text);
+            double tiempoInicial = 0;
+            double tiempoFinal = reader.TotalTime.TotalSeconds;
+            double frecuenciaMuestreo = reader.WaveFormat.SampleRate;
+            
+            txt_TiempoInicial.Text = "0";
+            txt_TiempoFinal.Text = tiempoFinal.ToString();
+            txt_FrecuenciaDeMuestreo.Text = txt_FrecuenciaDeMuestreo.ToString();
 
-                    señal = new SeñalSenoidal(amplitud, fase, frecuencia);
-                    break;
-
-                // Señal Rampa
-                case 1:
-                    señal = new SeñalRampa();
-                    break;
-
-                // Señal Exponencial
-                case 2:
-                    double alpha = double.Parse(((ConfiguracionSeñalExponencial)(panelConfiguracion.Children[0])).txt_Alpha.Text);
-                    señal = new SeñalExponencial(alpha);
-                    break;
-
-                // Señal Rectangular
-                case 3:
-                    señal = new SeñalRectangular();
-                    break;
-
-                default:
-                    señal = null;
-                    break;
-            }
+            señal = new SeñalPersonalizada();
 
             // Primer Señal
             señal.TiempoInicial = tiempoInicial;
             señal.TiempoFinal = tiempoFinal;
             señal.FrecuenciaMuestreo = frecuenciaMuestreo;
 
-            señal.construirSeñalDigital();
+            // Construir nuestra señal a trávés del archivo de audio
+            var bufferLectura = new float[reader.WaveFormat.Channels];
+            int muestrasLeidas = 1;
+            double instanteActual = 0;
+            double intervaloMuestra = 1.0 / frecuenciaMuestreo;
 
-            // Truncar
-            if ((bool)ckb_Truncado.IsChecked)
+            do
             {
-                double n = double.Parse(txt_Truncado.Text);
-                señal.truncar(n);
-            }
-
-            // Escalar
-            if ((bool)ckb_Escala.IsChecked)
-            {
-                double factorEscala = double.Parse(txt_EscalaAmplitud.Text);
-                señal.escalar(factorEscala);
-            }
-
-            // Desplazar
-            if ((bool)ckb_Desplazamiento.IsChecked)
-            {
-                double factorDesplazamiento = double.Parse(txt_Desplazamiento.Text);
-                señal.desplazar(factorDesplazamiento);
-            }
-
+                muestrasLeidas = reader.Read(bufferLectura, 0, reader.WaveFormat.Channels);
+                if(muestrasLeidas > 0)
+                {
+                    double max = bufferLectura.Take(muestrasLeidas).Max();
+                    señal.Muestras.Add(new Muestra(instanteActual, max));
+                }
+                instanteActual += intervaloMuestra;
+            } while (muestrasLeidas > 0);
+            
             // Actualizar
             señal.actualizarAmplitudMaxima();
 
@@ -126,35 +99,6 @@ namespace GraficadorSeñales
             plnEjeY.Points.Clear();
             plnEjeY.Points.Add(new Point((-tiempoInicial) * scrContenedor.Width, 0));
             plnEjeY.Points.Add(new Point((-tiempoInicial) * scrContenedor.Width, scrContenedor.Height));
-        }
-
-        // Combo Box de la Primera Señal
-        private void cb_TipoSeñal_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            panelConfiguracion.Children.Clear();
-            switch (cb_TipoSeñal.SelectedIndex)
-            {
-                // Señal Senoidal
-                case 0:
-                    panelConfiguracion.Children.Add(new ConfiguracionSeñalSenoidal());
-                    break;
-
-                // Señal Rampa
-                case 1:
-                    break;
-
-                // Señal Senoidal
-                case 2:
-                    panelConfiguracion.Children.Add(new ConfiguracionSeñalExponencial());
-                    break;
-
-                // Señal Rectangular
-                case 3:
-                    break;
-
-                default:
-                    break;
-            }
         }
 
         private void BotonTransformadadeFourier_Click(object sender, RoutedEventArgs e)
@@ -208,6 +152,17 @@ namespace GraficadorSeñales
             plnEjeY_Resultado.Points.Clear();
             plnEjeY_Resultado.Points.Add(new Point((-transformada.TiempoInicial) * scrContenedor_Resultado.Width, 0));
             plnEjeY_Resultado.Points.Add(new Point((-transformada.TiempoInicial) * scrContenedor_Resultado.Width, scrContenedor_Resultado.Height));
+
+        }
+
+        private void Examinar_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog fileDialog = new OpenFileDialog();
+
+            if((bool)fileDialog.ShowDialog())
+            {
+                txt_RutaArchivo.Text = fileDialog.FileName;
+            }
 
         }
     }
