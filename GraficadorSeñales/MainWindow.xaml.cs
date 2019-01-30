@@ -42,7 +42,7 @@ namespace GraficadorSeñales
             
             txt_TiempoInicial.Text = "0";
             txt_TiempoFinal.Text = tiempoFinal.ToString();
-            txt_FrecuenciaDeMuestreo.Text = txt_FrecuenciaDeMuestreo.ToString();
+            txt_FrecuenciaDeMuestreo.Text = frecuenciaMuestreo.ToString();
 
             señal = new SeñalPersonalizada();
 
@@ -133,15 +133,17 @@ namespace GraficadorSeñales
                     valorMaximo = muestra.Y;
                     indiceMaximo = indiceActual;
                 }
+
                 indiceActual++;
-                if(indiceActual > (double)transformada.Muestras.Count)
+
+                if (indiceActual > ((double)transformada.Muestras.Count / 2))
                 {
                     break;
                 }
             }
-
-            double frecuenciaFundaental = ((double)indiceMaximo * indiceActual) / (double)transformada.Muestras.Count;
-            lbl_Hz.Text = frecuenciaFundaental.ToString("F") + " HZ";
+            
+            double frecuenciaFundamental = ((double)indiceMaximo * señal.FrecuenciaMuestreo) / (double)transformada.Muestras.Count;
+            lbl_Hz.Text = frecuenciaFundamental.ToString("F") + " HZ";
 
             // Línea del Eje X
             plnEjeX_Resultado.Points.Clear();
